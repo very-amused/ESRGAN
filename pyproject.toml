@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "esrgan_very_amused"
+version = "1.0.0"
+authors = [
+  { name="Keith Scroggs", email="very-amused@pm.me" },
+]
+description = "A modified version of a modified version of the original ESRGAN test.py script with added features."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Install Arch Linux",
+		"Private :: Do Not Upload"
+]
+license = "Apache-2.0"
+license-files = ["LICEN[CS]E*"]
