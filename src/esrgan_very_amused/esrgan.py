@@ -16,10 +16,10 @@ from rich import print
 from rich.logging import RichHandler
 from rich.progress import BarColumn, Progress, TaskID, TimeRemainingColumn
 
-import utils.dataops as ops
-from utils.architecture.RRDB import RRDBNet as ESRGAN
-from utils.architecture.SPSR import SPSRNet as SPSR
-from utils.architecture.SRVGG import SRVGGNetCompact as RealESRGANv2
+import esrgan_very_amused.utils.dataops as ops
+from esrgan_very_amused.utils.architecture.RRDB import RRDBNet as ESRGAN
+from esrgan_very_amused.utils.architecture.SPSR import SPSRNet as SPSR
+from esrgan_very_amused.utils.architecture.SRVGG import SRVGGNetCompact as RealESRGANv2
 
 
 class SeamlessOptions(str, Enum):
