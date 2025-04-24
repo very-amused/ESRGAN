@@ -136,16 +136,13 @@ class Upscale:
                 model_chain[idx] = self.__check_model_path(model)
 
         if not self.input.exists():
-            self.log.error(f'Folder "{self.input}" does not exist.')
+            self.log.error(f'File "{self.input}" does not exist.')
             sys.exit(1)
-        elif self.input.is_file():
-            self.log.error(f'Folder "{self.input}" is a file.')
+        if self.input.is_dir():
+          if self.output.is_file():
+            self.log.error(f'Output directory {self.output} is a file.')
             sys.exit(1)
-        elif self.output.is_file():
-            self.log.error(f'Folder "{self.output}" is a file.')
-            sys.exit(1)
-        elif not self.output.exists():
-            self.output.mkdir(parents=True)
+          self.output.mkdir(parents=True, exist_ok=True)
 
         print(
             'Model{:s}: "{:s}"'.format(
@@ -158,12 +155,18 @@ class Upscale:
         images: List[Path] = []
         # List of extensions: https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56
         # Also gif and tga which seem to be supported as well though are undocumented.
-        for ext in ["bmp", "dib", "jpeg", "jpg", "jpe", "jp2", "png", "webp", "pbm", "pgm", "ppm", "pxm", "pnm", "pfm", "sr", "ras", "tiff", "tif", "exr", "hdr", "pic", "gif", "tga"]:
-            images.extend(self.input.glob(f"**/*.{ext}"))
+        if self.input.is_dir():
+          for ext in ["bmp", "dib", "jpeg", "jpg", "jpe", "jp2", "png", "webp", "pbm", "pgm", "ppm", "pxm", "pnm", "pfm", "sr", "ras", "tiff", "tif", "exr", "hdr", "pic", "gif", "tga"]:
+              images.extend(self.input.glob(f"**/*.{ext}"))
+        else:
+          images.append(self.input)
 
         # Store the maximum split depths for each model in the chain
         # TODO: there might be a better way of doing this but it's good enough for now
         split_depths = {}
+
+        input_dir = self.input if self.input.is_dir() else self.input.parent
+        output_dir = self.output if self.output.is_dir() else self.output.parent
 
         with Progress(
             # SpinnerColumn(),
@@ -174,15 +177,12 @@ class Upscale:
         ) as progress:
             task_upscaling = progress.add_task("Upscaling", total=len(images))
             for idx, img_path in enumerate(images, 1):
-                img_input_path_rel = img_path.relative_to(self.input)
-                output_dir = self.output.joinpath(img_input_path_rel).parent
-                img_output_path_rel = output_dir.joinpath(f"{img_path.stem}.png")
-                output_dir.mkdir(parents=True, exist_ok=True)
+                img_input_path_rel = img_path.relative_to(input_dir)
                 if len(model_chain) == 1:
                     self.log.info(
                         f'Processing {str(idx).zfill(len(str(len(images))))}: "{img_input_path_rel}"'
                     )
-                if self.skip_existing and img_output_path_rel.is_file():
+                if self.skip_existing and img_path.is_file():
                     self.log.warning("Already exists, skipping")
                     if self.delete_input:
                         img_path.unlink(missing_ok=True)
@@ -251,7 +251,9 @@ class Upscale:
                 is_success, im_buf_arr = cv2.imencode(".png", rlt)
                 if not is_success:
                     raise Exception('cv2.imencode failure')
-                im_buf_arr.tofile(str(img_output_path_rel.absolute()))
+                output_path = self.output if not self.output.is_dir() else output_dir / img_input_path_rel
+                print(f'writing result to {output_path}')
+                im_buf_arr.tofile(str(output_path.absolute()))
 
                 if self.delete_input:
                     img_path.unlink(missing_ok=True)
